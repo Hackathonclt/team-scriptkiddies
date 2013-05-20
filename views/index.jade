@@ -1,0 +1,83 @@
+extends layout
+
+block content
+  .map-content
+    #map
+      leaflet(markers='markers', center='center')
+  #content-and-controls
+    #hovered-info
+      h3 NC Census Tract Data
+      p Please hover over an area
+    #color-legend
+    #streaming-household-count
+    .clearfix
+    #search-controls
+      button.medium.radius#view-details View Tract Details
+      button.medium.radius#clear-search Clear Selections
+      form.custom
+  #tract-details(style='display: none;')
+  .clearfix
+
+  script(id='color-legend-tpl', type='text/html')
+    | <p>Total Population</p>
+    | <ul>
+    | <% grades.forEach(function(grade) { %>
+    |   <li><i style='background-color: <%= grade.color %>'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</i> <%= grade.low %> &ndash; <%= grade.high %></li>
+    | <% }); %>
+    | </ul>
+
+  script(id='hovered-info-tpl', type='text/html')
+    | <h3>NC Census Tract Data</h3>
+    | <% if (tract) { %>
+    |   <% [2010, 2000].forEach(function(year) { %>
+    |     <h4>Year <%= year %></h4>
+    |     <table>
+    |       <tr>
+    |         <th>Population</th>
+    |         <td><% if (tract['totalPop' + year]) { %>
+    |           <%= tract['totalPop' + year].toFixed(2) %> people
+    |         <% } %></td>
+    |       </tr>
+    |       <tr>
+    |         <th>Population Density</th>
+    |         <td><% if (tract['populationDensity' + year]) { %>
+    |           <%= tract['populationDensity' + year].toFixed(2) %> people / mi<sup>2</sup>
+    |         <% } %></td>
+    |       </tr>
+    |     </table>
+    |   <% }); %>
+    | <% } else { %>
+    |    <p>Hover over an area</p>
+    | <% } %>
+
+  script(id='streaming-household-count-tpl', type='text/html')
+    | <h4>Total Households Streamed</h4>
+    | <h3><%= totalHouseholds %></h3>
+
+  script(id='tract-details-tmpl', type='text/html')
+    | <button id='view-summary' class='medium radius'>View Tract Summary</button>
+    | <div id='detail-box'>
+    |   <h3>Tract Details (2010)</h3>
+    |   <table id="tracts-details-table" class='tracts-list'>
+    |   <thead><tr>
+    |     <th>Population</th>
+    |     <th width='75'>Avg Household Size</th>
+    |     <th>Total Sales</th>
+    |     <th>Sales Breakdown</th>
+    |   </tr></thead>
+    |   <% tracts.forEach(function(tract) { %>
+    |     <tr id='tract-<%= tract.tractId %>'>
+    |       <td><%= tract.totalPop2010 %></td> 
+    |       <td><%= averageHouseholdSize(tract, 2010) %></td> 
+    |       <td><%= totalOverallSales(tract) %></td> 
+    |       <!--  naughty, naughty -->
+    |       <% var total = totalSales(tract) %>
+    |       <td><table class='sales-table'><% _.keys(total).forEach(function(saleType) {  %>
+    |         <% if (total[saleType]) { %>
+    |           <tr><th><%= saleType %></th><td><%= total[saleType] %></td><td><%= typePercentageSales(tract,total,saleType) %></td></tr>
+    |         <% } %>
+    |       <% }); %></table></td> 
+    |     </tr>
+    |   <% }); %>
+    |   </table>
+    | </div>
